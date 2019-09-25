@@ -1,0 +1,18 @@
+[
+  {
+    "modid": "fusions",
+    "name": "Fusions",
+    "description": "injection point type '%s'",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "https://www.github.com/landonjw",
+    "updateUrl": "",
+    "authorList": [
+      "landonjw"
+    ],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
