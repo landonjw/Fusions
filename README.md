@@ -17,4 +17,4 @@ Fusions is a plugin that brings back the ditto fusion feature from Even More Pix
 - `/fusions (/fusion, /fuse) [pokemon] [sacrifice]`: If GUI is enabled, opens the GUI. If GUI is disabled, creates a fusion from Pokemon and Sacrifice arguments.
 
 ## Permissions:
-- `fusions.command.fusion`: Allows user to use the /fusions command.
+- `fusions.commands.fusion`: Allows user to use the /fusions command.
