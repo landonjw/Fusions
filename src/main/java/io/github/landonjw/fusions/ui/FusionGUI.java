@@ -19,11 +19,14 @@ import org.spongepowered.api.item.enchantment.Enchantment;
 import org.spongepowered.api.item.enchantment.EnchantmentTypes;
 import org.spongepowered.api.item.inventory.InventoryArchetypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.property.InventoryDimension;
 import org.spongepowered.api.item.inventory.property.InventoryTitle;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -105,10 +108,11 @@ public class FusionGUI {
                 ArrayList<Text> lore = new ArrayList<>();
                 lore.add(Text.EMPTY);
 
-                int[] ivs = pokemonList[i].getIVs().getArray();
-                lore.addAll(getIVLore(ivs));
-
-                lore.add(Text.EMPTY);
+                if(fusion.ivsEnabled()){
+                    int[] ivs = pokemonList[i].getIVs().getArray();
+                    lore.addAll(getIVLore(ivs));
+                    lore.add(Text.EMPTY);
+                }
                 if (pokemonList[i].isShiny()) {
                     lore.add(Text.of(TextColors.AQUA, "Shiny"));
                 }
@@ -116,9 +120,12 @@ public class FusionGUI {
                     lore.add(Text.of(TextColors.AQUA, "Hidden Ability"));
                 }
 
+                int timesFused = pokemonList[i].getPersistentData().getInteger("fuseCount");
                 if(fusion.getMaxFuseCount() > 0){
-                    int timesFused = pokemonList[i].getPersistentData().getInteger("fuseCount");
                     lore.add(Text.of(TextColors.AQUA, "Fuse Count: ", TextColors.GRAY, timesFused + "/" + fusion.getMaxFuseCount()));
+                }
+                else{
+                    lore.add(Text.of(TextColors.AQUA, "Fuse Count: : ", TextColors.GRAY, timesFused));
                 }
 
                 //Give sprite enchantment effect and lore if it's a selected Pokemon
@@ -142,16 +149,20 @@ public class FusionGUI {
                 int slotIndex = i;
                 Consumer<Action.Click> consSelectPokemon = action -> {
                     if(action.getEvent() instanceof ClickInventoryEvent.Primary){
-                        if(fusion.getSacrificeIndex() != slotIndex && fusion.getPokemonIndex() != slotIndex){
-                            fusion.setPokemonIndex(slotIndex);
-                            openGUI();
-                        }
+                        Task.builder().execute(() -> {
+                            if(fusion.getSacrificeIndex() != slotIndex && fusion.getPokemonIndex() != slotIndex){
+                                fusion.setPokemonIndex(slotIndex);
+                                openGUI();
+                            }
+                        }).submit(Fusions.getInstance());
                     }
                     else if(action.getEvent() instanceof ClickInventoryEvent.Secondary){
-                        if(fusion.getSacrificeIndex() != slotIndex && fusion.getPokemonIndex() != slotIndex){
-                            fusion.setSacrificeIndex(slotIndex);
-                            openGUI();
-                        }
+                        Task.builder().execute(() -> {
+                            if(fusion.getSacrificeIndex() != slotIndex && fusion.getPokemonIndex() != slotIndex){
+                                fusion.setSacrificeIndex(slotIndex);
+                                openGUI();
+                            }
+                        }).submit(Fusions.getInstance());
                     }
                 };
 
@@ -178,14 +189,18 @@ public class FusionGUI {
                     lore.add(validation);
                 }
                 else{
-                    lore.addAll(getIVLore(fusion.getPokemonIVs(), fusion.getFusedIVs()));
-
-                    lore.add(Text.EMPTY);
+                    if(fusion.ivsEnabled()){
+                        lore.addAll(getIVLore(fusion.getPokemonIVs(), fusion.getFusedIVs()));
+                        lore.add(Text.EMPTY);
+                    }
                     if (fusion.transfersShiny()) {
                         lore.add(Text.of(TextColors.AQUA, "Becomes Shiny"));
                     }
                     if (fusion.transfersHA()) {
                         lore.add(Text.of(TextColors.AQUA, "Acquires Hidden Ability"));
+                    }
+                    if(fusion.makesUnbreedable()){
+                        lore.add(Text.of(TextColors.RED, "Becomes Unbreedable"));
                     }
 
                     int newFusionCount = fusion.getPokemon().getPersistentData().getInteger("fuseCount") + 1;
@@ -203,16 +218,18 @@ public class FusionGUI {
                     if(fusion.costEnabled()){
                         double cost = fusion.getCost();
                         lore.add(Text.EMPTY);
-                        lore.add(Text.of(TextColors.DARK_AQUA, "Cost: ", TextColors.AQUA, cost));
+                        lore.add(Text.of(TextColors.DARK_AQUA, "Cost: ", TextColors.AQUA, new BigDecimal(cost).toPlainString()));
                     }
                 }
                 itemPokemon.offer(Keys.ITEM_LORE, lore);
 
                 Consumer<Action.Click> consStartFusion = action -> {
-                    if(fusion.validateSlots() == null){
-                        fusion.startFusion();
-                        player.closeInventory();
-                    }
+                    Task.builder().execute(() -> {
+                        if(fusion.validateSlots() == null){
+                            fusion.startFusion();
+                            player.closeInventory();
+                        }
+                    }).submit(Fusions.getInstance());
                 };
 
                 Element fusion = Element.of(itemPokemon, consStartFusion);
@@ -221,16 +238,17 @@ public class FusionGUI {
         }
 
         Layout layout = Layout.builder()
+                .dimension(InventoryDimension.of(9, 5))
                 .row(blueFiller, 0)
                 .set(blueFiller, 9, 15, 16, 17)
                 .set(blackFiller, 18, 24, 26)
                 .set(whiteFiller, 27, 33, 34, 35)
                 .row(whiteFiller, 4)
-                .row(grayFiller, 5)
                 .setAll(elements).build();
 
         View view = View.builder()
                 .archetype(InventoryArchetypes.DOUBLE_CHEST)
+                .property(InventoryDimension.of(9, 5))
                 .property(InventoryTitle.of(Text.of(TextColors.DARK_AQUA, TextStyles.BOLD, "Fusions")))
                 .build(Fusions.getContainer());
 

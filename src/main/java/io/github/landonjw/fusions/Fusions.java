@@ -3,8 +3,6 @@ package io.github.landonjw.fusions;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.pixelmonmod.pixelmon.Pixelmon;
-import com.pixelmonmod.pixelmon.api.events.PlayerActivateShrineEvent;
-import com.pixelmonmod.pixelmon.enums.EnumGrowth;
 import com.pixelmonmod.pixelmon.enums.EnumSpecies;
 import io.github.landonjw.fusions.commands.FusionCommand;
 import io.github.landonjw.fusions.configuration.ConfigManager;
@@ -15,7 +13,6 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
-import org.spongepowered.api.data.DataManager;
 import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
@@ -27,10 +24,10 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.text.Text;
-import scala.actors.threadpool.Arrays;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,11 +57,15 @@ import java.util.Optional;
  *      - FrostEffects for GUI Design.
  * ------------------------------------------------------------------------------------
  */
+
+//TODO: Add placeholder support for fusion count & max fusion count.
+//TODO: Add configuration option for different fuse counts per species.
+//TODO: Add configuration option for different costs per species.
 public class Fusions {
 
     public static final String PLUGIN_ID = "fusions";
     public static final String PLUGIN_NAME = "Fusions";
-    public static final String PLUGIN_VERSION = "1.0.0";
+    public static final String PLUGIN_VERSION = "1.0.1";
 
     private static Fusions instance;
     private static PluginContainer container;
@@ -76,8 +77,10 @@ public class Fusions {
     @ConfigDir(sharedRoot=false)
     private Path dir;
 
-    /** List of banned species from fusions. */
-    private static List<EnumSpecies> bannedSpecies = new ArrayList<>();
+    /** List of species banned from fusing. */
+    private static List<EnumSpecies> bannedFusionSpecies = new ArrayList<>();
+    /** List of species banned from sacrificing.*/
+    private static List<EnumSpecies> bannedSacrificeSpecies = new ArrayList<>();
     /** List of species to use egg group as fuse group during fusion. */
     private static List<EnumSpecies> eggGroupOverride = new ArrayList<>();
     /** List of species to use species as fuse group during fusion. */
@@ -98,7 +101,7 @@ public class Fusions {
 
     @Listener
     public void init(GameInitializationEvent event){
-        loadBanList();
+        loadBanLists();
         loadOverrides();
 
         CommandSpec fusion = CommandSpec.builder()
@@ -140,8 +143,9 @@ public class Fusions {
     public void onReload(GameReloadEvent event){
         ConfigManager.load();
 
-        bannedSpecies.clear();
-        loadBanList();
+        bannedFusionSpecies.clear();
+        bannedSacrificeSpecies.clear();
+        loadBanLists();
 
         eggGroupOverride.clear();
         speciesOverride.clear();
@@ -172,11 +176,19 @@ public class Fusions {
     }
 
     /**
-     * Gets list of banned species from fusions.
-     * @return List of banned species from fusions.
+     * Gets list of species banned from fusing.
+     * @return List of species banned from fusing.
      */
-    public static List<EnumSpecies> getBannedSpecies(){
-        return bannedSpecies;
+    public static List<EnumSpecies> getBannedFusionSpecies(){
+        return bannedFusionSpecies;
+    }
+
+    /**
+     * Gets list of species banned from sacrificing.
+     * @return List of species banned from sacrificing.
+     */
+    public static List<EnumSpecies> getBannedSacrificeSpecies(){
+        return bannedSacrificeSpecies;
     }
 
     /**
@@ -214,26 +226,43 @@ public class Fusions {
     /**
      * Sets up species ban list from configuration node values.
      */
-    private void loadBanList(){
+    private void loadBanLists(){
         try {
-            //Grab list type & banlist from configuration node.
-            String list = ConfigManager.getConfigNode("Fusing-Features", "Species-Banlist-Type").getString("Black");
-            List<String> strSpeciesList = ConfigManager.getConfigNode("Fusing-Features", "Species-Banlist").getList(TypeToken.of(String.class));
+            //Grab list type & banlist from configuration node for fusion bans.
+            String fusionListType = ConfigManager.getConfigNode("Fusing-Features", "Species-Bans-Fusion", "List-Type").getString("Black");
+            List<String> strFusionSpeciesList = ConfigManager.getConfigNode("Fusing-Features", "Species-Bans-Fusion", "Fusion-Banlist").getList(TypeToken.of(String.class));
 
             //If config value is whitelist, add all species to banlist & remove any that are parsed. If blacklist, add any that are parsed.
-            if(list.equalsIgnoreCase("White")){
-                List<EnumSpecies> bannedSpecies = parseSpecies(strSpeciesList);
-                this.bannedSpecies = Arrays.asList(EnumSpecies.values());
-                for(EnumSpecies species : bannedSpecies){
-                    this.bannedSpecies.remove(species);
-                }
+            if(fusionListType.equalsIgnoreCase("White")){
+                bannedFusionSpecies.addAll(Arrays.asList(EnumSpecies.values()));
+                bannedFusionSpecies.removeAll(parseSpecies(strFusionSpeciesList));
             }
             else{
-                bannedSpecies = parseSpecies(strSpeciesList);
+                bannedFusionSpecies.addAll(parseSpecies(strFusionSpeciesList));
+            }
+
+
+        }
+        catch (ObjectMappingException e){
+            logger.warn("Fusion species banlist could not be loaded.");
+        }
+
+        try{
+            //Grab list type & banlist from configuration node for sacrifice bans.
+            String sacrificeListType = ConfigManager.getConfigNode("Fusing-Features", "Species-Bans-Sacrifice", "List-Type").getString("Black");
+            List<String> strSacrificeSpeciesList = ConfigManager.getConfigNode("Fusing-Features", "Species-Bans-Sacrifice", "Sacrifice-Banlist").getList(TypeToken.of(String.class));
+
+            //If config value is whitelist, add all species to banlist & remove any that are parsed. If blacklist, add any that are parsed.
+            if(sacrificeListType.equalsIgnoreCase("White")){
+                bannedSacrificeSpecies.addAll(Arrays.asList(EnumSpecies.values()));
+                bannedSacrificeSpecies.removeAll(parseSpecies(strSacrificeSpeciesList));
+            }
+            else{
+                bannedSacrificeSpecies.addAll(parseSpecies(strSacrificeSpeciesList));
             }
         }
-        catch(ObjectMappingException e){
-            logger.warn("Species list could not be loaded.");
+        catch (ObjectMappingException e){
+            logger.warn("Sacrifice species banlist could not be loaded.");
         }
     }
 

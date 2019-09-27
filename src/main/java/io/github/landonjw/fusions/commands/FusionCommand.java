@@ -31,6 +31,7 @@ public class FusionCommand implements CommandExecutor {
     private static HashMap<UUID, Instant> cooldowns = new HashMap<>();
     /** How long the cooldown should be for the fusion command, or 0 to disable. */
     private int cooldown;
+    private boolean enableGUI;
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
@@ -39,10 +40,11 @@ public class FusionCommand implements CommandExecutor {
             Player player = (Player) src;
 
             cooldown = ConfigManager.getConfigNode("Fusing-Features", "Cooldown").getInt();
+            enableGUI = (Fusions.isTeslaRegistered() && ConfigManager.getConfigNode("GUI-Features", "Enable-GUI").getBoolean());
 
             //Check that player is not still on cooldown if cooldown feature is enabled.
             if(cooldown > 0){
-                //clearFinishedCooldowns();
+                clearFinishedCooldowns();
                 if(cooldowns.containsKey(player.getUniqueId())){
                     Instant instant = cooldowns.get(player.getUniqueId());
 
@@ -55,9 +57,11 @@ public class FusionCommand implements CommandExecutor {
             }
 
             //Check if command should use GUI or not.
-            if(Fusions.isTeslaRegistered() && ConfigManager.getConfigNode("GUI-Features", "Enable-GUI").getBoolean()){
+            if(enableGUI){
                 FusionGUI gui = new FusionGUI(player);
                 gui.openGUI();
+
+
             }
             else{
                 //Stop command if both slot arguments are not present.
@@ -87,12 +91,21 @@ public class FusionCommand implements CommandExecutor {
     private void clearFinishedCooldowns(){
         List<UUID> uuidsToRemove = new ArrayList<>();
         cooldowns.forEach((uuid, instant) -> {
-            if(Duration.between(instant, Instant.now()).compareTo(Duration.ofSeconds(cooldown)) <= 0){
+            if(Duration.between(instant, Instant.now()).compareTo(Duration.ofSeconds(cooldown)) > 0){
                 uuidsToRemove.add(uuid);
             }
         });
         for(UUID uuid : uuidsToRemove){
             cooldowns.remove(uuid);
         }
+    }
+
+    /**
+     * Adds a player to the cooldown list.
+     * Used for GUI so that player does not go on cooldown without successfully fusing.
+     * @param uuid UUID of the player to add cooldown to.
+     */
+    public static void addCooldown(UUID uuid){
+        cooldowns.put(uuid, Instant.now());
     }
 }

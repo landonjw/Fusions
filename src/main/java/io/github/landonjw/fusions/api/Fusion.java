@@ -2,17 +2,20 @@ package io.github.landonjw.fusions.api;
 
 import com.pixelmonmod.pixelmon.Pixelmon;
 import com.pixelmonmod.pixelmon.api.pokemon.Pokemon;
+import com.pixelmonmod.pixelmon.api.pokemon.PokemonSpec;
 import com.pixelmonmod.pixelmon.battles.BattleRegistry;
 import com.pixelmonmod.pixelmon.enums.EnumEggGroup;
 import com.pixelmonmod.pixelmon.enums.EnumGrowth;
 import com.pixelmonmod.pixelmon.enums.EnumType;
 import io.github.landonjw.fusions.Fusions;
+import io.github.landonjw.fusions.commands.FusionCommand;
 import io.github.landonjw.fusions.configuration.ConfigManager;
 import net.minecraft.entity.player.EntityPlayerMP;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.EventContext;
 import org.spongepowered.api.event.cause.EventContextKeys;
+import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.economy.account.UniqueAccount;
 import org.spongepowered.api.service.economy.transaction.ResultType;
@@ -64,6 +67,8 @@ public class Fusion {
     private int fuseCount;
     /** The type of group that is allowed to fuse together. Can be type, species, or egg group. */
     private String fuseGroup;
+    /** Makes fused Pokemon unbreedable. */
+    private boolean forceUnbreedable;
     /** The number of IVs to be affected from a fuse. IF less than 6, it grabs the highest IVs from sacrifice. */
     private int numAffectedIVs;
     /** The percent of difference in Pokemon and sacrifice's IVs to add to Pokemon during fusion. */
@@ -86,6 +91,8 @@ public class Fusion {
     private double costPerFusion;
     /** If cost per fusion should scale linearly or exponentially. */
     private String costIncreaseType;
+    /** The currency to use for fusion command costs.*/
+    private String currency;
 
     /**
      * Basic constructor for Fusion that does not have any slots chosen.
@@ -125,7 +132,6 @@ public class Fusion {
      * @param sacrifice Pokemon to sacrifice for fusion.
      * @return Text consisting the rule broken, or null if everything is valid for fusion.
      */
-    //TODO: Check player balance
     public Text validateSlots(int pokemonIndex, Pokemon pokemon, int sacrificeIndex, Pokemon sacrifice){
 
         //Make sure player isn't in battle.
@@ -141,7 +147,7 @@ public class Fusion {
 
         //Make sure indexes aren't the same (can't fuse the same Pokemon).
         if(pokemonIndex == sacrificeIndex){
-            return Text.of(TextColors.RED, "You cannot fuse a Pokemon with itself");
+            return Text.of(TextColors.RED, "You cannot fuse a Pokemon with itself.");
         }
 
         //Check that neither slot is empty.
@@ -149,9 +155,19 @@ public class Fusion {
             return Text.of(TextColors.RED, "You must select two slots containing a Pokemon.");
         }
 
-        //Check if pokemon is blacklisted.
-        if(Fusions.getBannedSpecies().contains(pokemon.getSpecies())){
+        //Check if a Pokemon is outside of it's pokeball.
+        if(pokemon.getPixelmonIfExists() != null || sacrifice.getPixelmonIfExists() != null ){
+            return Text.of(TextColors.RED, "A pokemon is outside of it's pokeball.");
+        }
+
+        //Check if pokemon is banned from being fused.
+        if(Fusions.getBannedFusionSpecies().contains(pokemon.getSpecies())){
             return Text.of(TextColors.RED, "This pokemon is not capable of fusion.");
+        }
+
+        //Check if sacrifice is banned from being a sacrifice.
+        if(Fusions.getBannedSacrificeSpecies().contains(sacrifice.getSpecies())){
+            return Text.of(TextColors.RED, "A pokemon refuses to be sacrificed.");
         }
 
         if(fuseCount > 0) {
@@ -217,6 +233,7 @@ public class Fusion {
         enableGrowth = ConfigManager.getConfigNode("Fusing-Features", "Growth", "Enable-Growth").getBoolean();
         fuseCount = ConfigManager.getConfigNode("Fusing-Features", "Fuse-Count").getInt();
         fuseGroup = ConfigManager.getConfigNode("Fusing-Features", "Fuse-Group").getString("Species");
+        forceUnbreedable = ConfigManager.getConfigNode("Fusing-Features", "Force-Unbreedable").getBoolean();
         numAffectedIVs = ConfigManager.getConfigNode("Fusing-Features", "IVs", "Num-IVs-Affected").getInt();
         fusePercent = ConfigManager.getConfigNode("Fusing-Features", "IVs", "Fuse-Percent").getDouble();
         maxIncrease = ConfigManager.getConfigNode("Fusing-Features", "IVs", "Fuse-Increase-Max").getInt();
@@ -227,7 +244,8 @@ public class Fusion {
         enableCost = ConfigManager.getConfigNode("Fusing-Costs", "Enable-Cost").getBoolean();
         baseCost = ConfigManager.getConfigNode("Fusing-Costs", "Cost-Base").getDouble();
         costPerFusion = ConfigManager.getConfigNode("Fusing-Costs", "Cost-Per-Fusion").getDouble();
-        costIncreaseType = ConfigManager.getConfigNode("Fusing-Costs", "Cost-Increase-Type").getString("N/A");
+        costIncreaseType = ConfigManager.getConfigNode("Fusing-Costs", "Cost-Increase-Type").getString("Linear");
+        currency = ConfigManager.getConfigNode("Fusing-Costs", "Currency").getString("");
 
         /* --------------------------------------------------------
          * Validate configuration values and readjust if necessary.
@@ -272,14 +290,17 @@ public class Fusion {
             minIncrease = 0;
         }
 
+        //Check base cost is above or equal to 0, adjust to 0 if it isn't.
         if(baseCost < 0){
             baseCost = 0;
         }
 
+        //Check cost per fusion is above or equal to 0, adjust to 0 if it isn't.
         if(costPerFusion < 0){
             costPerFusion = 0;
         }
 
+        //Check cost increase type is equal to Linear or Exponential, set to Linear if it isn't.
         if(!costIncreaseType.equalsIgnoreCase("Linear")
                 && !costIncreaseType.equalsIgnoreCase("Exponential")){
             costIncreaseType = "Linear";
@@ -289,7 +310,6 @@ public class Fusion {
     /**
      * Starts the fusion process if validation is successful.
      */
-    //TODO: Add cost
     public void startFusion(){
 
         //Validates fusion and sends player error message if it doesn't succeed.
@@ -299,21 +319,38 @@ public class Fusion {
             return;
         }
 
+        //Try to withdraw money from player, stop fusion if they don't have necessary funds.
         if(enableCost) {
+
+            //Get economy service if available.
             Optional<EconomyService> optionalEconomyService = Fusions.getEconomyService();
             if (optionalEconomyService.isPresent()) {
                 EconomyService economyService = optionalEconomyService.get();
 
+                //Get user account
                 Optional<UniqueAccount> optionalUniqueAccount = economyService.getOrCreateAccount(player.getUniqueId());
                 if (optionalUniqueAccount.isPresent()) {
                     UniqueAccount uniqueAccount = optionalUniqueAccount.get();
 
                     double fusionCost = getCost();
 
+                    //Try to withdraw from player, send message and cancel fusion if they dont have the funds.
                     EventContext eventContext = EventContext.builder().add(EventContextKeys.PLUGIN, Fusions.getContainer()).build();
                     Cause cause = Cause.of(eventContext, Fusions.getContainer());
 
-                    TransactionResult transactionResult = uniqueAccount.withdraw(economyService.getDefaultCurrency(), BigDecimal.valueOf(fusionCost), cause);
+                    Currency econCurrency = null;
+                    for(Currency economyCurrency : economyService.getCurrencies()){
+                        if(economyCurrency.getDisplayName().equals(Text.of(currency))){
+                            econCurrency = economyCurrency;
+                        }
+                    }
+
+                    if(econCurrency == null){
+                        Fusions.getLogger().warn("Specified currency not found. Using default currency...");
+                        econCurrency = economyService.getDefaultCurrency();
+                    }
+
+                    TransactionResult transactionResult = uniqueAccount.withdraw(econCurrency, BigDecimal.valueOf(fusionCost), cause);
 
                     if(transactionResult.getResult() == ResultType.FAILED || transactionResult.getResult() == ResultType.ACCOUNT_NO_FUNDS){
                         player.sendMessage(Text.of(TextColors.RED, "You do not have enough money."));
@@ -338,7 +375,8 @@ public class Fusion {
                 sizeChange = "larger";
             }
             else if(sacrifice.getGrowth().scaleValue < pokemon.getGrowth().scaleValue){
-                pokemon.setGrowth(EnumGrowth.getGrowthFromIndex((pokemon.getGrowth().index - 1) % EnumGrowth.values().length));
+                int growthIndex = ((pokemon.getGrowth().index - 1 + EnumGrowth.values().length) % EnumGrowth.values().length);
+                pokemon.setGrowth(EnumGrowth.getGrowthFromIndex(growthIndex));
                 sizeChange = "smaller";
             }
         }
@@ -363,15 +401,24 @@ public class Fusion {
             pokemon.setShiny(true);
         }
 
+        //Makes Pokemon unbreedable if setting is enabled.
+        boolean madeUnbreedable = makesUnbreedable();
+        if(madeUnbreedable){
+            new PokemonSpec("unbreedable").apply(pokemon);
+        }
+
         //Adds one to Pokemon's fuse count.
         pokemon.getPersistentData().setInteger("fuseCount", pokemon.getPersistentData().getInteger("fuseCount") + 1);
 
         //Gets resulting text for fusion.
-        Text fusedText = getFusionResultText(fusedIVs, sizeChange, fuseCountTransferred, haTransferred, shinyTransferred);
+        Text fusedText = getFusionResultText(fusedIVs, sizeChange, fuseCountTransferred, haTransferred, shinyTransferred, madeUnbreedable);
 
         //Removes sacrifice from inventory & sends result text.
         Pixelmon.storageManager.getParty(player.getUniqueId()).set(sacrificeIndex, null);
         player.sendMessage(fusedText);
+
+        //Adds player to the fusion command cooldown.
+        FusionCommand.addCooldown(player.getUniqueId());
     }
 
     /**
@@ -385,8 +432,8 @@ public class Fusion {
      * @return
      */
     private Text getFusionResultText(int[] fusedIVs, String sizeChange, boolean fuseCountTransferred,
-                                     boolean haTransferred, boolean shinyTransferred){
-        Text fusedText = Text.of(TextColors.BLUE, "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-\n\n",
+                                     boolean haTransferred, boolean shinyTransferred, boolean madeUnbreedable){
+        Text fusedText = Text.of(TextColors.BLUE, "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-\n",
                 TextColors.AQUA, TextStyles.BOLD, "Your Pokemon have been fused!\n");
 
         /* --------------------------------------------------------
@@ -425,14 +472,17 @@ public class Fusion {
                 fusedText = fusedText.concat(Text.of(TextColors.DARK_AQUA, type + ": ",
                         TextColors.GRAY, pokemonIVs[i], TextColors.DARK_AQUA, " > ", TextColors.GRAY, fusedIVs[i], differenceText, "\n"));
             }
-
-            fusedText = fusedText.concat(Text.of("\n"));
         }
 
         /* --------------------------------------------------------
          * Displays any transferred qualities from the sacrifice.
          * --------------------------------------------------------
          */
+
+        //Add empty line to separate IVs from other qualities.
+        if(sizeChange != null || fuseCountTransferred || haTransferred || shinyTransferred || madeUnbreedable){
+            fusedText = fusedText.concat(Text.of("\n"));
+        }
 
         if(sizeChange != null){
             fusedText = fusedText.concat(Text.of(TextColors.AQUA, pokemon.getSpecies().name + " seems to have gotten " + sizeChange + "!\n"));
@@ -448,6 +498,10 @@ public class Fusion {
 
         if(shinyTransferred){
             fusedText = fusedText.concat(Text.of(TextColors.AQUA, pokemon.getSpecies().name + " absorbed the sacrifice's shininess!\n"));
+        }
+
+        if(madeUnbreedable){
+            fusedText = fusedText.concat(Text.of(TextColors.RED, pokemon.getSpecies().name + " can no longer breed!\n"));
         }
 
         fusedText = fusedText.concat(Text.of(TextColors.BLUE, "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-"));
@@ -560,14 +614,18 @@ public class Fusion {
      * @return Array with the resulting IVs from fusion.
      */
     public int[] getFusedIVs(){
+
+        //Check pokemon are valid
         if(validateSlots(pokemonIndex, pokemon, sacrificeIndex, sacrifice) != null){
             return null;
         }
-        //Generate new IV set without affecting highest IVs.
+
+        //Generate a new IV set and find the highest IVs
         int[] newIVs = pokemonIVs.clone();
 
         List<Integer> indexesToAlter = getHighestIVIndex(newIVs, numAffectedIVs);
 
+        //Generate new IVs for fusion
         for(int index : indexesToAlter){
             int ivToChange = newIVs[index];
             int sacrificeIV = sacrificeIVs[index];
@@ -641,11 +699,9 @@ public class Fusion {
      * @return True if fuse count will be transferred from sacrifice during fusion, false if it won't.
      */
     public boolean transfersFuseCount(){
-        if(retainFuseCount && fuseCount > 0) {
+        if(retainFuseCount) {
             int sacrificeFuseCount = sacrifice.getPersistentData().getInteger("fuseCount");
-            if(sacrificeFuseCount > 0){
-                return true;
-            }
+            return sacrificeFuseCount > 0;
         }
         return false;
     }
@@ -657,9 +713,7 @@ public class Fusion {
     public boolean transfersHA(){
         if(retainHA) {
             if(sacrifice.getAbilitySlot() == 2) {
-                if(pokemon.getBaseStats().abilities[2] != null && pokemon.getAbilitySlot() != 2){
-                    return true;
-                }
+                return pokemon.getBaseStats().abilities[2] != null && pokemon.getAbilitySlot() != 2;
             }
         }
         return false;
@@ -671,27 +725,72 @@ public class Fusion {
      */
     public boolean transfersShiny(){
         if(retainShiny) {
-            if(sacrifice.isShiny() && !pokemon.isShiny()){
-                return true;
-            }
+            return sacrifice.isShiny() && !pokemon.isShiny();
         }
         return false;
     }
 
+    /**
+     * Checks if fusion will make a Pokemon unbreedable.
+     * @return True if fusion will make a Pokemon unbreedable, false if it won't.
+     */
+    public boolean makesUnbreedable(){
+        if(forceUnbreedable) {
+            return !new PokemonSpec("unbreedable").matches(pokemon);
+        }
+        return false;
+    }
+
+    /**
+     * Checks if IV altering features are enabled for the plugin.
+     * @return True if IV altering features are enabled for the plugin, false if they aren't.
+     */
+    public boolean ivsEnabled(){
+        return enableIVs;
+    }
+
+    /**
+     * Checks if there is a cost for doing a fusion.
+     * @return True if there is a cost for doing a fusion, false if there isn't a cost.
+     */
     public boolean costEnabled(){
         return enableCost;
     }
 
+    /**
+     * Checks if fusion makes fused Pokemon unbreedable.
+     * @return True if fused Pokemon are unbreedable, false if they are breedable.
+     */
+    public boolean forceUnbreedable(){
+        return forceUnbreedable;
+    }
+
+    /**
+     * Gets the cost of doing a fusion.
+     * @return Cost of doing a fusion. If cost isn't enabled, returns 0.
+     */
     public double getCost(){
-        int fuseCount = pokemon.getPersistentData().getInteger("fuseCount") + sacrifice.getPersistentData().getInteger("fuseCount") + 1;
-        if (costIncreaseType.equalsIgnoreCase("Linear")) {
-            return baseCost + costPerFusion * (fuseCount);
+        if(costEnabled()) {
+
+            //Get total fuse count after fusion from Pokemon & sacrifice
+            int fuseCount = 0;
+            if(transfersFuseCount()){
+                fuseCount = pokemon.getPersistentData().getInteger("fuseCount") + sacrifice.getPersistentData().getInteger("fuseCount") + 1;
+            }
+            else{
+                fuseCount = pokemon.getPersistentData().getInteger("fuseCount") + 1;
+            }
+
+            if (costIncreaseType.equalsIgnoreCase("Exponential")) {
+                return baseCost + Math.pow(costPerFusion, fuseCount);
+            }
+            else  if(costIncreaseType.equalsIgnoreCase("Linear")) {
+                return baseCost + costPerFusion * (fuseCount);
+            }
+            else{
+                return baseCost;
+            }
         }
-        else if (costIncreaseType.equalsIgnoreCase("Exponential")) {
-            return baseCost + Math.pow(costPerFusion, fuseCount);
-        }
-        else{
-            return baseCost;
-        }
+        return 0;
     }
 }
