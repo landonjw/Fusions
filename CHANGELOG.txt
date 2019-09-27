@@ -1,0 +1,12 @@
+9/25/2019 - Version 1.0.0
+
+- A new plugin has appeared!
+- Added command /fusion.
+- Added ability to fuse IVs and Growth.
+- Added ability to retain HA, Shiny, or previous fuse counts from sacrifices.
+- Added ability to add cost to command.
+- Added ability to add cooldown to command.
+- Added optional GUI for command if TeslaPowered is on server.
+
+Version has yet to be extensively tested, but will be later today & tomorrow.
+Be advised that there may be bugs in the meantime.
