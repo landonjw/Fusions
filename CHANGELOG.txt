@@ -1,3 +1,29 @@
+9/29/2019 - Version 1.0.2
+
+- highest IVs are now properly selected from sacrifice when number of affected IVs are below 6.
+- Added placeholders
+    - Requires PlaceholderAPI
+    - %fusions_max_fuse_count% : Displays the maximum fuse count a Pokemon is allowed to have.
+    - %fusions_fuse_count_<slot>% : Displays the current fuse count of the Pokemon slot (between 1 and 6).
+        - Defaults to 0 if no Pokemon found in slot.
+
+9/26/2019 - Version 1.0.1
+
+- Added Force-Unbreedable configuration value that makes all fusions unbreedable.
+- Made GUI 5 rows high from 6, removing null row.
+- Pokemon can no longer be fused if they are outside of their Pokeball.
+- Added multiple economy support.
+- Fixed annoyingly spammy sponge warning message about delaying inventory actions.
+- Fixed fuse count not displaying in party lore if max fuse count was disabled.
+- Fixed fuse cost always adding sacrifices fusion count, even if retain fusion count is disabled.
+- Fixed large numbers (>10mil) converting to scientific notation.
+- Fixed fuse count not transferring when max fuse count was 0.
+- Added forgotten command cooldown when GUI is enabled.
+- Split banlist into fusion banlist and sacrifice banlist (both with ability to blacklist or whitelist).
+- Fixed server error due to modulus going negative when dividend is negative while growth change is enabled.
+- Fixed GUI displaying IV changes on fusion when IV Features are disabled.
+- Removed bad import causing server error when using whitelist.
+
 9/25/2019 - Version 1.0.0
 
 - A new plugin has appeared!
