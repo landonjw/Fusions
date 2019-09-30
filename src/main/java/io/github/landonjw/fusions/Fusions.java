@@ -74,6 +74,7 @@ public class Fusions {
     private static PluginContainer container;
     private static Logger logger = LoggerFactory.getLogger(PLUGIN_NAME);
 
+    /** Economy service loaded on server, if there is one. */
     private static EconomyService economyService;
 
     @Inject

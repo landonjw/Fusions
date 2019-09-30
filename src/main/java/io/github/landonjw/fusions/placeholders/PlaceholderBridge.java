@@ -9,6 +9,11 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 
+/**
+ * Allows functionality with placeholders when PlaceholderAPI is present.
+ * @author landonjw
+ * @since 9/29/2019 Version 1.0.2
+ */
 public class PlaceholderBridge {
     public static void register() {
         Sponge.getServiceManager().provideUnchecked(PlaceholderService.class).loadAll(new PlaceholderBridge(), Fusions.getInstance()).stream()
@@ -27,6 +32,7 @@ public class PlaceholderBridge {
         String[] values = token.split("_");
         if (values.length == 3) {
             if(token.equalsIgnoreCase("max_fuse_count")){
+                //Returns config setting for max fuse counts if placeholder is %fusions_max_fuse_count%
                 int fuseCount = ConfigManager.getConfigNode("Fusing-Features", "Fuse-Count").getInt();
 
                 if(fuseCount < 0){
@@ -36,8 +42,10 @@ public class PlaceholderBridge {
                 return fuseCount;
             }
             else if(values[0].equalsIgnoreCase("fuse") && values[1].equalsIgnoreCase("count")){
+                //Returns current fuse count of slot if placeholder is %fusions_fuse_count_<slot>%
                 int slot = Integer.parseInt(values[2]);
 
+                //Only allow slots between 1&6
                 if(slot < 1 || slot > 6){
                     return 0;
                 }
