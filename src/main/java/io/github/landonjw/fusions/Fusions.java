@@ -6,6 +6,7 @@ import com.pixelmonmod.pixelmon.Pixelmon;
 import com.pixelmonmod.pixelmon.enums.EnumSpecies;
 import io.github.landonjw.fusions.commands.FusionCommand;
 import io.github.landonjw.fusions.configuration.ConfigManager;
+import io.github.landonjw.fusions.placeholders.PlaceholderBridge;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,8 @@ import java.util.Optional;
         url = "https://www.github.com/landonjw", authors = {"landonjw"},
         dependencies={
                 @Dependency(id = Pixelmon.MODID, version = Pixelmon.VERSION),
-                @Dependency(id = "teslapowered", optional = true)
+                @Dependency(id = "teslapowered", optional = true),
+                @Dependency(id = "placeholderapi", optional = true)
         })
 
 /* -----------------------------------------------------------------------------------
@@ -58,14 +60,15 @@ import java.util.Optional;
  * ------------------------------------------------------------------------------------
  */
 
-//TODO: Add placeholder support for fusion count & max fusion count.
-//TODO: Add configuration option for different fuse counts per species.
-//TODO: Add configuration option for different costs per species.
+//TODO: Create custom parsing system to do the following:
+    //Add configuration option for different fuse counts per species.
+    //Add configuration option for different costs per species.
+    //Make species always fusable or sacrificeable
 public class Fusions {
 
     public static final String PLUGIN_ID = "fusions";
     public static final String PLUGIN_NAME = "Fusions";
-    public static final String PLUGIN_VERSION = "1.0.1";
+    public static final String PLUGIN_VERSION = "1.0.2";
 
     private static Fusions instance;
     private static PluginContainer container;
@@ -131,6 +134,10 @@ public class Fusions {
 
         if (Sponge.getPluginManager().isLoaded("teslacore")) {
             teslaRegistered = true;
+        }
+
+        if (Sponge.getPluginManager().isLoaded("placeholderapi")) {
+            PlaceholderBridge.register();
         }
     }
 

@@ -37,11 +37,15 @@ minecraft {
 
 repositories {
     mavenCentral()
+    maven {
+        url 'https://jitpack.io'
+    }
 }
 
 dependencies {
     compile 'org.spongepowered:spongeapi:7.1.0'
     compile files('/Pixelmon-1.12.2-7.0.7-universal.jar')
+    compile 'com.github.rojo8399:PlaceholderAPI:4.5.1'
 }
 
 processResources {

@@ -25,10 +25,7 @@ import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Lets a player fuse a Pokemon with a sacrifice in order to inherit certain traits or IVs.
@@ -623,7 +620,7 @@ public class Fusion {
         //Generate a new IV set and find the highest IVs
         int[] newIVs = pokemonIVs.clone();
 
-        List<Integer> indexesToAlter = getHighestIVIndex(newIVs, numAffectedIVs);
+        List<Integer> indexesToAlter = getHighestIVIndex(sacrificeIVs, numAffectedIVs);
 
         //Generate new IVs for fusion
         for(int index : indexesToAlter){
@@ -651,12 +648,19 @@ public class Fusion {
      * @return List of indexes corresponding to the highest IVs from integer array.
      */
     public List<Integer> getHighestIVIndex(int[] ivs, int ivsToGet){
-        int[] sortedIVs = ivs.clone();
-        Arrays.sort(sortedIVs);
-
         List<Integer> indexes = new ArrayList<>();
+
         for(int i = 0; i < ivsToGet; i++){
-            indexes.add(i);
+            int highestIVIndex = 0;
+            int highestValue = 0;
+
+            for(int k = 0; k < ivs.length; k++){
+                if(ivs[k] >= highestValue && !indexes.contains(k) && pokemonIVs[k] != 31){
+                    highestValue = ivs[k];
+                    highestIVIndex = k;
+                }
+            }
+            indexes.add(highestIVIndex);
         }
 
         return indexes;
