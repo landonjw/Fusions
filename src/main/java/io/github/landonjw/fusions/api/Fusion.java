@@ -30,7 +30,7 @@ import java.util.*;
 /**
  * Lets a player fuse a Pokemon with a sacrifice in order to inherit certain traits or IVs.
  * @author landonjw
- * @since 9/25/2019 Version 1.0.0
+ * @since 1.0.0
  */
 public class Fusion {
     /* -----------------------------------------------------------------------------------------
@@ -80,6 +80,8 @@ public class Fusion {
     private boolean retainHA;
     /** If a fusion should keep the shininess of a sacrificed Pokemon. */
     private boolean retainShiny;
+    /** If a fusion should keep unbreedable of a sacrificed Pokemon. */
+    private boolean retrainUnbreedable;
     /** If fusion should cost any money. */
     private boolean enableCost;
     /** The base cost of fusing two Pokemon. */
@@ -102,8 +104,9 @@ public class Fusion {
 
     /**
      * Advances constructor for Fusion that has slots specified and loads information about Pokemon.
-     * @param player Player that is doing the fusion.
-     * @param pokemonSlot Slot of the Pokemon to do fusion on.
+     *
+     * @param player        Player that is doing the fusion.
+     * @param pokemonSlot   Slot of the Pokemon to do fusion on.
      * @param sacrificeSlot Slot of the Pokemon to sacrifice.
      */
     public Fusion(Player player, int pokemonSlot, int sacrificeSlot){
@@ -123,10 +126,11 @@ public class Fusion {
 
     /**
      * Checks slots and Pokemon to see if they pass rules set for Fusion.
-     * @param pokemonIndex Index of the Pokemon to do fusion on.
-     * @param pokemon Pokemon to do fusion on.
+     *
+     * @param pokemonIndex   Index of the Pokemon to do fusion on.
+     * @param pokemon        Pokemon to do fusion on.
      * @param sacrificeIndex Index of the Pokemon to sacrifice for fusion.
-     * @param sacrifice Pokemon to sacrifice for fusion.
+     * @param sacrifice      Pokemon to sacrifice for fusion.
      * @return Text consisting the rule broken, or null if everything is valid for fusion.
      */
     public Text validateSlots(int pokemonIndex, Pokemon pokemon, int sacrificeIndex, Pokemon sacrifice){
@@ -211,6 +215,7 @@ public class Fusion {
 
     /**
      * Checks slots and Pokemon to see if they pass rules set for Fusion. Uses variables set in object.
+     *
      * @return Text consisting the rule broken, or null if everything is valid for fusion.
      */
     public Text validateSlots(){
@@ -238,6 +243,7 @@ public class Fusion {
         retainFuseCount = ConfigManager.getConfigNode("Retain-Qualities", "Retain-Fuse-Count").getBoolean();
         retainHA = ConfigManager.getConfigNode("Retain-Qualities", "Retain-HA").getBoolean();
         retainShiny = ConfigManager.getConfigNode("Retain-Qualities", "Retain-Shiny").getBoolean();
+        retrainUnbreedable = ConfigManager.getConfigNode("Retain-Qualities", "Retain-Unbreedable").getBoolean();
         enableCost = ConfigManager.getConfigNode("Fusing-Costs", "Enable-Cost").getBoolean();
         baseCost = ConfigManager.getConfigNode("Fusing-Costs", "Cost-Base").getDouble();
         costPerFusion = ConfigManager.getConfigNode("Fusing-Costs", "Cost-Per-Fusion").getDouble();
@@ -421,12 +427,13 @@ public class Fusion {
     /**
      * Gets the resulting text from a fusion, displaying IV changes and any qualities retained from sacrifice.
      * fusedIVs and sizeChange parameters will not be displayed if their respective features are disabled.
-     * @param fusedIVs Resulting IVs after fusion.
-     * @param sizeChange Size change after fusion, or empty if no size change.
+     *
+     * @param fusedIVs             Resulting IVs after fusion.
+     * @param sizeChange           Size change after fusion, or empty if no size change.
      * @param fuseCountTransferred If a fuse count was transferred from the sacrifice.
-     * @param haTransferred If a HA was transferred from the sacrifice.
-     * @param shinyTransferred If shininess was transferred from the sacrifice.
-     * @return
+     * @param haTransferred        If a HA was transferred from the sacrifice.
+     * @param shinyTransferred     If shininess was transferred from the sacrifice.
+     * @return Resulting fusion text
      */
     private Text getFusionResultText(int[] fusedIVs, String sizeChange, boolean fuseCountTransferred,
                                      boolean haTransferred, boolean shinyTransferred, boolean madeUnbreedable){
@@ -508,6 +515,7 @@ public class Fusion {
 
     /**
      * Gets the player doing the fusion.
+     *
      * @return Player doing the fusion.
      */
     public Player getPlayer(){
@@ -516,6 +524,7 @@ public class Fusion {
 
     /**
      * Gets the index of the Pokemon to do fusion on.
+     *
      * @return The index of the Pokemon to do fusion on.
      */
     public int getPokemonIndex(){
@@ -524,6 +533,7 @@ public class Fusion {
 
     /**
      * Gets the index of the Pokemon to sacrifice for fusion.
+     *
      * @return The index of the Pokemon to sacrifice for fusion.
      */
     public int getSacrificeIndex(){
@@ -532,6 +542,7 @@ public class Fusion {
 
     /**
      * Gets the Pokemon to do fusion on.
+     *
      * @return The Pokemon to do fusion on.
      */
     public Pokemon getPokemon(){
@@ -540,6 +551,7 @@ public class Fusion {
 
     /**
      * Gets the Pokemon to sacrifice for fusion.
+     *
      * @return The Pokemon to sacrifice for fusion.
      */
     public Pokemon getSacrifice(){
@@ -548,6 +560,7 @@ public class Fusion {
 
     /**
      * Gets IVs of the Pokemon to do fusion on.
+     *
      * @return Array with the IVs of the Pokemon to do fusion on.
      */
     public int[] getPokemonIVs(){
@@ -556,6 +569,7 @@ public class Fusion {
 
     /**
      * Gets IVs of the Pokemon to sacrifice for fusion.
+     *
      * @return Array with the IVs of the Pokemon to sacrifice for fusion.
      */
     public int[] getSacrificeIVs(){
@@ -568,6 +582,7 @@ public class Fusion {
 
     /**
      * Sets the index of the Pokemon to do fusion on.
+     *
      * @param index Index of the Pokemon to do fusion on.
      */
     public void setPokemonIndex(int index){
@@ -580,6 +595,7 @@ public class Fusion {
 
     /**
      * Sets the slot of the Pokemon to do fusion on.
+     *
      * @param slot Slot of the Pokemon to do fusion on.
      */
     public void setPokemonSlot(int slot){
@@ -588,6 +604,7 @@ public class Fusion {
 
     /**
      * Sets the index of the Pokemon to sacrifice for fusion.
+     *
      * @param index Index of the Pokemon to sacrifice for fusion.
      */
     public void setSacrificeIndex(int index){
@@ -600,6 +617,7 @@ public class Fusion {
 
     /**
      * Sets the slot of the Pokemon to sacrifice for fusion.
+     *
      * @param slot Slot of the Pokemon to sacrifice for fusion.
      */
     public void setSacrificeSlot(int slot){
@@ -608,6 +626,7 @@ public class Fusion {
 
     /**
      * Gets resulting IVs from fusion.
+     *
      * @return Array with the resulting IVs from fusion.
      */
     public int[] getFusedIVs(){
@@ -643,7 +662,8 @@ public class Fusion {
 
     /**
      * Gets a certain amount of indexes with the highest IVs from an integer array.
-     * @param ivs Integer array consisting of IVs.
+     *
+     * @param ivs      Integer array consisting of IVs.
      * @param ivsToGet How many IVs to get.
      * @return List of indexes corresponding to the highest IVs from integer array.
      */
@@ -668,7 +688,8 @@ public class Fusion {
 
     /**
      * Checks if two Pokemon share a type.
-     * @param pokemon Pokemon to do fusion on.
+     *
+     * @param pokemon   Pokemon to do fusion on.
      * @param sacrifice Pokemon to sacrifice for fusion.
      * @return True if Pokemon share a type, false if they don't.
      */
@@ -683,7 +704,8 @@ public class Fusion {
 
     /**
      * Checks if two Pokemon share an egg group.
-     * @param pokemon Pokemon to do fusion on.
+     *
+     * @param pokemon   Pokemon to do fusion on.
      * @param sacrifice Pokemon to sacrifice for fusion.
      * @return True if Pokemon share an egg group, false if they don't.
      */
@@ -700,6 +722,7 @@ public class Fusion {
 
     /**
      * Checks if fuse count will be transferred from sacrifice during fusion.
+     *
      * @return True if fuse count will be transferred from sacrifice during fusion, false if it won't.
      */
     public boolean transfersFuseCount(){
@@ -712,6 +735,7 @@ public class Fusion {
 
     /**
      * Checks if HA will be transferred from sacrifice during fusion.
+     *
      * @return True if HA will be transferred from sacrifice during fusion, false if it won't.
      */
     public boolean transfersHA(){
@@ -725,6 +749,7 @@ public class Fusion {
 
     /**
      * Checks if shininess will be transferred from sacrifice during fusion.
+     *
      * @return True if shininess will be transferred from sacrifice during fusion, false if it won't.
      */
     public boolean transfersShiny(){
@@ -736,17 +761,22 @@ public class Fusion {
 
     /**
      * Checks if fusion will make a Pokemon unbreedable.
+     *
      * @return True if fusion will make a Pokemon unbreedable, false if it won't.
      */
     public boolean makesUnbreedable(){
         if(forceUnbreedable) {
             return !new PokemonSpec("unbreedable").matches(pokemon);
         }
+        else if(retrainUnbreedable){
+            return new PokemonSpec("unbreedable").matches(sacrifice);
+        }
         return false;
     }
 
     /**
      * Checks if IV altering features are enabled for the plugin.
+     *
      * @return True if IV altering features are enabled for the plugin, false if they aren't.
      */
     public boolean ivsEnabled(){
@@ -755,6 +785,7 @@ public class Fusion {
 
     /**
      * Checks if there is a cost for doing a fusion.
+     *
      * @return True if there is a cost for doing a fusion, false if there isn't a cost.
      */
     public boolean costEnabled(){
@@ -763,6 +794,7 @@ public class Fusion {
 
     /**
      * Checks if fusion makes fused Pokemon unbreedable.
+     *
      * @return True if fused Pokemon are unbreedable, false if they are breedable.
      */
     public boolean forceUnbreedable(){
@@ -771,6 +803,7 @@ public class Fusion {
 
     /**
      * Gets the cost of doing a fusion.
+     *
      * @return Cost of doing a fusion. If cost isn't enabled, returns 0.
      */
     public double getCost(){

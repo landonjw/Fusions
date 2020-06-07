@@ -32,15 +32,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-@Plugin(id = Fusions.PLUGIN_ID, name = Fusions.PLUGIN_NAME, version = Fusions.PLUGIN_VERSION,
-        description = "Allows you to fuse pokemon in Pixelmon Reforged.",
-        url = "https://www.github.com/landonjw", authors = {"landonjw"},
-        dependencies={
-                @Dependency(id = Pixelmon.MODID, version = Pixelmon.VERSION),
-                @Dependency(id = "teslapowered", optional = true),
-                @Dependency(id = "placeholderapi", optional = true)
-        })
-
 /* -----------------------------------------------------------------------------------
  *                                Fusions by landonjw
  *
@@ -64,11 +55,20 @@ import java.util.Optional;
     //Add configuration option for different fuse counts per species.
     //Add configuration option for different costs per species.
     //Make species always fusable or sacrificeable
+
+@Plugin(id = Fusions.PLUGIN_ID, name = Fusions.PLUGIN_NAME, version = Fusions.PLUGIN_VERSION,
+        description = "Allows you to fuse pokemon in Pixelmon Reforged.",
+        url = "https://www.github.com/landonjw", authors = {"landonjw"},
+        dependencies={
+                @Dependency(id = Pixelmon.MODID, version = Pixelmon.VERSION),
+                @Dependency(id = "teslapowered", optional = true),
+                @Dependency(id = "placeholderapi", optional = true)
+        })
 public class Fusions {
 
     public static final String PLUGIN_ID = "fusions";
     public static final String PLUGIN_NAME = "Fusions";
-    public static final String PLUGIN_VERSION = "1.0.2";
+    public static final String PLUGIN_VERSION = "1.0.3";
 
     private static Fusions instance;
     private static PluginContainer container;
@@ -177,6 +177,7 @@ public class Fusions {
 
     /**
      * Tries to get economy service loaded.
+     *
      * @return Optional containing Economy Service or null if no economy service is loaded.
      */
     public static Optional<EconomyService> getEconomyService(){
@@ -185,6 +186,7 @@ public class Fusions {
 
     /**
      * Gets list of species banned from fusing.
+     *
      * @return List of species banned from fusing.
      */
     public static List<EnumSpecies> getBannedFusionSpecies(){
@@ -193,6 +195,7 @@ public class Fusions {
 
     /**
      * Gets list of species banned from sacrificing.
+     *
      * @return List of species banned from sacrificing.
      */
     public static List<EnumSpecies> getBannedSacrificeSpecies(){
@@ -201,6 +204,7 @@ public class Fusions {
 
     /**
      * Gets list of species to use egg group as fuse group during fusion.
+     *
      * @return List of species to use egg group as fuse group during fusion.
      */
     public static List<EnumSpecies> getEggGroupOverride(){
@@ -209,6 +213,7 @@ public class Fusions {
 
     /**
      * Gets list of species to use species as fuse group during fusion.
+     *
      * @return List of species to use species as fuse group during fusion.
      */
     public static List<EnumSpecies> getSpeciesOverride(){
@@ -217,6 +222,7 @@ public class Fusions {
 
     /**
      * Gets list of species to use type as fuse group during fusion.
+     *
      * @return List of species to use type as fuse group during fusion.
      */
     public static List<EnumSpecies> getTypeOverride(){
@@ -225,6 +231,7 @@ public class Fusions {
 
     /**
      * Check that TeslaPowered has successfully been registered.
+     *
      * @return True if TelsaPowered has been loaded, false if it hasn't.
      */
     public static boolean isTeslaRegistered(){
@@ -305,6 +312,7 @@ public class Fusions {
 
     /**
      * Retrieves a list of EnumSpecies from a list of Strings.
+     *
      * @param strSpeciesList List of String of pokemon species names.
      * @return List of EnumSpecies.
      */

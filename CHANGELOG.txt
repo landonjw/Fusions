@@ -1,6 +1,10 @@
+6/6/2020 - Version 1.0.3
+
+- Added Retain-Unbreedable configuration value that will retain unbreedable spec from sacrifice.
+
 9/29/2019 - Version 1.0.2
 
-- highest IVs are now properly selected from sacrifice when number of affected IVs are below 6.
+- Highest IVs are now properly selected from sacrifice when number of affected IVs are below 6.
 - Added placeholders
     - Requires PlaceholderAPI
     - %fusions_max_fuse_count% : Displays the maximum fuse count a Pokemon is allowed to have.

@@ -23,14 +23,17 @@ import java.util.UUID;
 /**
  * Command for fusions. Will either create fusion from command arguments, or open GUI.
  * It will only open GUI if TeslaPowered is registered on the server, and configuration setting is enabled.
+ *
  * @author landonjw
- * @since 9/25/2019
+ * @since 1.0.0
  */
 public class FusionCommand implements CommandExecutor {
+
     /** Stores cooldowns for individual players if cooldown configuration setting is not 0. */
     private static HashMap<UUID, Instant> cooldowns = new HashMap<>();
     /** How long the cooldown should be for the fusion command, or 0 to disable. */
     private int cooldown;
+    /** If GUI is enabled. */
     private boolean enableGUI;
 
     @Override
@@ -75,11 +78,6 @@ public class FusionCommand implements CommandExecutor {
 
                 Fusion fusion = new Fusion(player, pokemonSlot, sacrificeSlot);
                 fusion.startFusion();
-
-                //Only add command cooldown if the arguments pass validation.
-                if(fusion.validateSlots() == null){
-                    cooldowns.put(player.getUniqueId(), Instant.now());
-                }
             }
         }
         return CommandResult.success();
@@ -103,6 +101,7 @@ public class FusionCommand implements CommandExecutor {
     /**
      * Adds a player to the cooldown list.
      * Used for GUI so that player does not go on cooldown without successfully fusing.
+     *
      * @param uuid UUID of the player to add cooldown to.
      */
     public static void addCooldown(UUID uuid){

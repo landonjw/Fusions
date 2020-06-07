@@ -37,10 +37,12 @@ import java.util.function.Consumer;
  * GUI that allows a player to fuse their Pokemon.
  * GUI consists of a players party on the left, and a slot for a fused Pokemon on the right.
  * The player can select two Pokemon by left and right clicking, and then left click resulting Pokemon to fuse.
+ *
  * @author landonjw
- * @since 9/25/2019 Version 1.0.0
+ * @since 1.0.0
  */
 public class FusionGUI {
+
     /** Player doing the fusion. */
     private Player player;
     /** Fusion player is creating. */
@@ -50,6 +52,7 @@ public class FusionGUI {
 
     /**
      * Constructor for the GUI. Creates a new Fusion object from player.
+     *
      * @param player Player doing the fusion.
      */
     public FusionGUI(Player player){
@@ -259,6 +262,7 @@ public class FusionGUI {
     /**
      * Creates a list of Text that displays a Pokemon's IVs.
      * Used for lore on Pokemon slots.
+     *
      * @param ivs IVs of Pokemon to generate lore for.
      * @return List of Text that displays a Pokemon's IVs.
      */
@@ -296,8 +300,9 @@ public class FusionGUI {
     /**
      * Creates a list of Text that displays a Pokemon's IVs and it's resulting Fusions IVs.
      * Used for lore on resulting fusion slot.
+     *
      * @param pokemonIVs IVs of a Pokemon before fusion.
-     * @param fuseIVs IVs of a Pokemon after fusion.
+     * @param fuseIVs    IVs of a Pokemon after fusion.
      * @return list of Text that displays a Pokemon's IVs and it's resulting Fusions IVs.
      */
     private List<Text> getIVLore(int[] pokemonIVs, int[] fuseIVs) {

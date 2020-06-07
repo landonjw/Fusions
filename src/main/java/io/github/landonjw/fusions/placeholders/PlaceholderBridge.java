@@ -11,8 +11,9 @@ import org.spongepowered.api.entity.living.player.Player;
 
 /**
  * Allows functionality with placeholders when PlaceholderAPI is present.
+ *
  * @author landonjw
- * @since 9/29/2019 Version 1.0.2
+ * @since 1.0.2
  */
 public class PlaceholderBridge {
     public static void register() {

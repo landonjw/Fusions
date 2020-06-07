@@ -13,10 +13,12 @@ import java.nio.file.Path;
 /**
  * Loads and stores all the configuration settings.
  * It loads from file on server start up. or when a player reloads the plugin.
+ *
  * @uathor landonjw
- * @since 9/25/2019 - Version 1.0.0
+ * @since 1.0.0
  */
 public class ConfigManager {
+
     /** Name of the file to grab configuration settings from. */
     private static final String[] FILE_NAMES = {"Configuration.conf"};
 
@@ -29,6 +31,7 @@ public class ConfigManager {
 
     /**
      * Locates the configuration file and loads it.
+     *
      * @param folder Folder where the configuration file is located.
      */
     public static void setup(Path folder){
@@ -79,6 +82,7 @@ public class ConfigManager {
 
     /**
      * Gets the configuration loader.
+     *
      * @return The configuration loader.
      */
     public static ConfigurationLoader<CommentedConfigurationNode> getConfigLoad(){
@@ -87,6 +91,7 @@ public class ConfigManager {
 
     /**
      * Gets a node from the configuration node, where all configuration settings are stored.
+     *
      * @param node A node within the configuration node.
      * @return A node within the configuration node.
      */
