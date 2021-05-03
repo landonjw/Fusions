@@ -40,12 +40,20 @@ repositories {
     maven {
         url 'https://jitpack.io'
     }
+    ivy {
+        name = "Pixelmon"
+        url "https://download.nodecdn.net/containers"
+        layout "pattern", {
+            artifact "/[organisation]/[module]/release/[revision]/[ext]"
+        }
+    }
 }
 
 dependencies {
-    compile 'org.spongepowered:spongeapi:7.1.0'
-    compile files('/Pixelmon-1.12.2-7.3.1-server.jar')
-    compile 'com.github.rojo8399:PlaceholderAPI:4.5.1'
+    implementation 'org.spongepowered:spongeapi:7.1.0'
+    compileOnly 'reforged:server:8.1.2@Pixelmon-1.12.2-8.1.2-server.jar'
+    implementation 'com.github.rojo8399:PlaceholderAPI:4.5.1'
+    implementation 'com.github.SimonFlash:Teslapowered:v1.1.6'
 }
 
 processResources {
