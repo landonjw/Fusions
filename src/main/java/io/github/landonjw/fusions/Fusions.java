@@ -29,8 +29,10 @@ import org.spongepowered.api.text.Text;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /* -----------------------------------------------------------------------------------
  *                                Fusions by landonjw
@@ -310,6 +312,15 @@ public class Fusions {
         }
     }
 
+    // "why not just use a stream mapping function?" because it'd be a stream, jackass
+    private List<String> parseSpeciesToStrings(Collection<EnumSpecies> speciesList) {
+        ArrayList<String> strSpecies = new ArrayList<>(speciesList.size());
+        for (EnumSpecies species : speciesList) {
+            strSpecies.add(species.getPokemonName());
+        }
+        return strSpecies;
+    }
+
     /**
      * Retrieves a list of EnumSpecies from a list of Strings.
      *
@@ -320,10 +331,10 @@ public class Fusions {
         List<EnumSpecies> speciesList = new ArrayList<>();
         for(String strSpecies : strSpeciesList){
             if(strSpecies.equalsIgnoreCase("Legendaries")){
-                speciesList.addAll(parseSpecies(EnumSpecies.legendaries));
+                speciesList.addAll(parseSpecies(parseSpeciesToStrings(EnumSpecies.legendaries)));
             }
             else if(strSpecies.equalsIgnoreCase("Ultrabeasts")){
-                speciesList.addAll(parseSpecies(EnumSpecies.ultrabeasts));
+                speciesList.addAll(parseSpecies(parseSpeciesToStrings(EnumSpecies.ultrabeasts)));
             }
             else{
                 EnumSpecies species = EnumSpecies.getFromNameAnyCase(strSpecies);
