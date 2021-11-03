@@ -51,7 +51,7 @@ repositories {
 
 dependencies {
     implementation 'org.spongepowered:spongeapi:7.1.0'
-    compileOnly 'reforged:server:8.1.2@Pixelmon-1.12.2-8.1.2-server.jar'
+    compileOnly 'reforged:server:8.3.1@Pixelmon-1.12.2-8.3.1c-server.jar'
     implementation 'com.github.rojo8399:PlaceholderAPI:4.5.1'
     implementation 'com.github.SimonFlash:Teslapowered:v1.1.6'
 }
