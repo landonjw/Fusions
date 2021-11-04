@@ -69,7 +69,7 @@ public class Fusions {
 
     public static final String PLUGIN_ID = "fusions";
     public static final String PLUGIN_NAME = "Fusions";
-    public static final String PLUGIN_VERSION = "1.0.3";
+    public static final String PLUGIN_VERSION = "1.0.4";
 
     private static Fusions instance;
     private static PluginContainer container;
